@@ -1,26 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="StartDefaul"/>
+		<item key="selection" value="Bits2Pixel"/>
 		<item key="wrap" value="true"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="bits2pixel"/>
+			<item value="uint16"/>
+			<item value="uint15"/>
+			<item value="u_delay"/>
+			<item value="oneMsHandle"/>
+			<item value="oneMsFunc"/>
+			<item value="oneMsHandleHandle"/>
+			<item value="main"/>
+			<item value="defaulttask"/>
+			<item value="ostimer"/>
+			<item value="ostimerstart"/>
+			<item value="osTask"/>
+			<item value="oneMsTimer"/>
+			<item value="startdefaulttask"/>
 			<item value="startdefaul"/>
-			<item value="startdefault"/>
-			<item value="Timer"/>
-			<item value="Timer_Periodic"/>
-			<item value="Timer_PeriodicEvent"/>
-			<item value="StartDefaultTask"/>
 		</list>
 		<list key="replacehistory">
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item key="DIALOG_X_ORIGIN" value="1127"/>
-		<item key="DIALOG_Y_ORIGIN" value="448"/>
+		<item key="DIALOG_X_ORIGIN" value="1324"/>
+		<item key="DIALOG_Y_ORIGIN" value="409"/>
 		<item key="DIALOG_WIDTH" value="322"/>
 		<item key="DIALOG_HEIGHT" value="391"/>
 		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>

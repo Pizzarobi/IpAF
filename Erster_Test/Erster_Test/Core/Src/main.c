@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "usb_host.h"
+#include "display.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -70,6 +71,11 @@ const osThreadAttr_t task10ms_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for oneMs */
+osTimerId_t oneMsHandle;
+const osTimerAttr_t oneMs_attributes = {
+  .name = "oneMs"
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -84,8 +90,10 @@ static void MX_TIM7_Init(void);
 void StartDefaultTask(void *argument);
 void StartTask02(void *argument);
 void StartTask03(void *argument);
+void oneMsFunc(void *argument);
 
 /* USER CODE BEGIN PFP */
+
 
 /* USER CODE END PFP */
 
@@ -128,6 +136,29 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
+	// Peripheral GPIOD einschalten
+	RCC->AHB1ENR |= 1<<3|1;
+	// Peripheral GPIOE einschalten
+	RCC->AHB1ENR |= 1<<4|1;
+
+	// GPIO einrichten für Output
+	GPIOD->MODER |= 0x55154545;
+	GPIOE->MODER |= 0x55554040;
+
+	// Orange LED konfigurieren
+	GPIOD->MODER |= 1<<24;
+
+	// Gruene LED (Port D12) ausschalten
+	GPIOD->ODR &= ~(1<<12);
+
+	//Read auf 1
+	GPIOD->MODER 	|= 1<<8;
+	GPIOD->ODR		|= 1<<4;
+
+	// Hintergrundbeleuchtung
+	GPIOD->MODER |= 1<<26;
+	GPIOD->ODR |= 1<<13;
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -140,6 +171,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
+
+  /* Create the timer(s) */
+  /* creation of oneMs */
+  oneMsHandle = osTimerNew(oneMsFunc, osTimerPeriodic, NULL, &oneMs_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -165,6 +200,11 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
+  osTimerStart(oneMsHandle,pdMS_TO_TICKS(125));
+  LCD_Init();
+  LCD_ClearDisplay(0xFFFF);
+
+  LCD_WriteString(0, 0, 0, 0xFFFF, "Test");
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -173,6 +213,9 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  //xTimerCreate("oneMsTimer", pdMS_TO_TICKS(1), pdTRUE, 0, prvOneMsTimer); /////////////////////////
+
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -530,6 +573,26 @@ void StartTask03(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartTask03 */
+}
+
+/* oneMsFunc function */
+void oneMsFunc(void *argument)
+{
+  /* USER CODE BEGIN oneMsFunc */
+//	static uint16_t counter = 0;
+//	counter++;
+//	if(counter < 125){
+//		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_SET);
+//	}else if(counter >= 125){
+//		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_RESET);
+//	}else if(counter >= 250){
+//		counter = 0;
+//	}
+
+	HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_15);
+
+
+  /* USER CODE END oneMsFunc */
 }
 
 /**

@@ -70,6 +70,11 @@ const osThreadAttr_t task10ms_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for oneMsHandle */
+osTimerId_t oneMsHandleHandle;
+const osTimerAttr_t oneMsHandle_attributes = {
+  .name = "oneMsHandle"
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -84,6 +89,7 @@ static void MX_TIM7_Init(void);
 void StartDefaultTask(void *argument);
 void StartTask02(void *argument);
 void StartTask03(void *argument);
+void prvOneMsHandle(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -140,6 +146,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
+
+  /* Create the timer(s) */
+  /* creation of oneMsHandle */
+  oneMsHandleHandle = osTimerNew(prvOneMsHandle, osTimerPeriodic, NULL, &oneMsHandle_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -521,6 +531,14 @@ void StartTask03(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartTask03 */
+}
+
+/* prvOneMsHandle function */
+void prvOneMsHandle(void *argument)
+{
+  /* USER CODE BEGIN prvOneMsHandle */
+
+  /* USER CODE END prvOneMsHandle */
 }
 
 /**

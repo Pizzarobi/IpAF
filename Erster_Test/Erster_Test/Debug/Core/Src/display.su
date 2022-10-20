@@ -1,0 +1,11 @@
+../Core/Src/display.c:16:6:LCD_SetCursor	16	static
+../Core/Src/display.c:21:6:LCD_DrawPixel	16	static
+../Core/Src/display.c:25:6:LCD_WriteLetter	40	static
+../Core/Src/display.c:40:6:LCD_WriteString	40	static
+../Core/Src/display.c:49:6:Bits2Pixel	72	static
+../Core/Src/display.c:87:6:LCD_ClearDisplay	24	static
+../Core/Src/display.c:97:7:LCD_Output16BitWord	16	static
+../Core/Src/display.c:110:6:LCD_WriteReg	16	static
+../Core/Src/display.c:115:6:LCD_WriteData	16	static
+../Core/Src/display.c:124:6:LCD_WriteCommand	16	static
+../Core/Src/display.c:133:6:LCD_Init	8	static
