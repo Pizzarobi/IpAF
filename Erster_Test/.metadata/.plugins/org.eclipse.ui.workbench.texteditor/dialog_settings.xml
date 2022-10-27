@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="Bits2Pixel"/>
+		<item key="selection" value="logQueue"/>
 		<item key="wrap" value="true"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="logQueue"/>
+			<item value="char *"/>
+			<item value="osMess"/>
+			<item value="osMessag"/>
+			<item value="osMessage"/>
+			<item value="logqueue"/>
+			<item value="logmessage"/>
+			<item value="Queue"/>
+			<item value="logMessa"/>
+			<item value="log"/>
+			<item value="logQueueHandle"/>
+			<item value="string"/>
+			<item value=""/>
+			<item value="taskcreate"/>
 			<item value="bits2pixel"/>
-			<item value="uint16"/>
-			<item value="uint15"/>
-			<item value="u_delay"/>
-			<item value="oneMsHandle"/>
-			<item value="oneMsFunc"/>
-			<item value="oneMsHandleHandle"/>
-			<item value="main"/>
-			<item value="defaulttask"/>
-			<item value="ostimer"/>
-			<item value="ostimerstart"/>
-			<item value="osTask"/>
-			<item value="oneMsTimer"/>
-			<item value="startdefaulttask"/>
-			<item value="startdefaul"/>
 		</list>
 		<list key="replacehistory">
 		</list>

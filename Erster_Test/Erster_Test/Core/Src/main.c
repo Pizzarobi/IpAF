@@ -20,10 +20,11 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "usb_host.h"
-#include "display.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include "display.h"
 
 /* USER CODE END Includes */
 
@@ -71,13 +72,32 @@ const osThreadAttr_t task10ms_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for producer01 */
+osThreadId_t producer01Handle;
+const osThreadAttr_t producer01_attributes = {
+  .name = "producer01",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for consumer01 */
+osThreadId_t consumer01Handle;
+const osThreadAttr_t consumer01_attributes = {
+  .name = "consumer01",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for logQueue */
+osMessageQueueId_t logQueueHandle;
+const osMessageQueueAttr_t logQueue_attributes = {
+  .name = "logQueue"
+};
 /* Definitions for oneMs */
 osTimerId_t oneMsHandle;
 const osTimerAttr_t oneMs_attributes = {
   .name = "oneMs"
 };
 /* USER CODE BEGIN PV */
-
+//QueueHandle_t logQueueHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,6 +110,8 @@ static void MX_TIM7_Init(void);
 void StartDefaultTask(void *argument);
 void StartTask02(void *argument);
 void StartTask03(void *argument);
+void producer01task(void *argument);
+void consumer01task(void *argument);
 void oneMsFunc(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -180,8 +202,13 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of logQueue */
+  logQueueHandle = osMessageQueueNew (16, 40, &logQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  //Handle = xQueueCreate(16,sizeof(uint32_t));
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -193,6 +220,12 @@ int main(void)
 
   /* creation of task10ms */
   task10msHandle = osThreadNew(StartTask03, NULL, &task10ms_attributes);
+
+  /* creation of producer01 */
+  producer01Handle = osThreadNew(producer01task, NULL, &producer01_attributes);
+
+  /* creation of consumer01 */
+  consumer01Handle = osThreadNew(consumer01task, NULL, &consumer01_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -573,6 +606,52 @@ void StartTask03(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartTask03 */
+}
+
+/* USER CODE BEGIN Header_producer01task */
+/**
+* @brief Function implementing the producer01 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_producer01task */
+void producer01task(void *argument)
+{
+  /* USER CODE BEGIN producer01task */
+  int nr = 0;
+  /* Infinite loop */
+  for(;;)
+  {
+	  char message[40] = "";
+	  sprintf(message,"Test %d",nr);
+	  nr++;
+	  //xQueueSendToFront(logQueueHandle,&message);
+	  //osMessagePut(logQueueHandle,(uint32_t)message,osWaitForever);
+	  osMessageQueuePut(logQueueHandle, &message, 0U, 0U);
+	  osDelay(1000);
+  }
+  /* USER CODE END producer01task */
+}
+
+/* USER CODE BEGIN Header_consumer01task */
+/**
+* @brief Function implementing the consumer01 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_consumer01task */
+void consumer01task(void *argument)
+{
+  /* USER CODE BEGIN consumer01task */
+	LCD_WriteString(0, 15, 0, 0xFFFF, "Check Queue every 1.5s");
+	char message[40] = "";
+  /* Infinite loop */
+  for(;;)
+  {
+	  osMessageQueueGet(logQueueHandle, &message, NULL, osWaitForever);
+	  LCD_WriteString(5, 50, 0, 0xFFFF, message);
+  }
+  /* USER CODE END consumer01task */
 }
 
 /* oneMsFunc function */
