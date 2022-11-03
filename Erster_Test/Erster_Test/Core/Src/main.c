@@ -86,6 +86,20 @@ const osThreadAttr_t consumer01_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for producer02 */
+osThreadId_t producer02Handle;
+const osThreadAttr_t producer02_attributes = {
+  .name = "producer02",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for producer03 */
+osThreadId_t producer03Handle;
+const osThreadAttr_t producer03_attributes = {
+  .name = "producer03",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for logQueue */
 osMessageQueueId_t logQueueHandle;
 const osMessageQueueAttr_t logQueue_attributes = {
@@ -112,6 +126,8 @@ void StartTask02(void *argument);
 void StartTask03(void *argument);
 void producer01task(void *argument);
 void consumer01task(void *argument);
+void producer02task(void *argument);
+void producer03task(void *argument);
 void oneMsFunc(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -226,6 +242,12 @@ int main(void)
 
   /* creation of consumer01 */
   consumer01Handle = osThreadNew(consumer01task, NULL, &consumer01_attributes);
+
+  /* creation of producer02 */
+  producer02Handle = osThreadNew(producer02task, NULL, &producer02_attributes);
+
+  /* creation of producer03 */
+  producer03Handle = osThreadNew(producer03task, NULL, &producer03_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -654,6 +676,56 @@ void consumer01task(void *argument)
 	  currentLine++;
   }
   /* USER CODE END consumer01task */
+}
+
+/* USER CODE BEGIN Header_producer02task */
+/**
+* @brief Function implementing the producer02 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_producer02task */
+void producer02task(void *argument)
+{
+  /* USER CODE BEGIN producer02task */
+  // Log Message wenn Blauer Taster gedrückt wurde
+  uint8_t pressed = 0;
+  char message[40] = "";
+  /* Infinite loop */
+  for(;;)
+  {
+	  if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0) && pressed==0){
+		  pressed = 1;
+		  message[40] = "";
+		  sprintf(message,"Blauer Taster gedrueckt");
+		  osMessageQueuePut(logQueueHandle,&message,0U,0U);
+	  }else if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)==0 && pressed == 1){
+		  pressed = 0;
+		  message[40] = "";
+		  sprintf(message,"Blauer Taster losgelassen");
+		  osMessageQueuePut(logQueueHandle,&message,0U,0U);
+	  }
+	osDelay(100);
+  }
+  /* USER CODE END producer02task */
+}
+
+/* USER CODE BEGIN Header_producer03task */
+/**
+* @brief Function implementing the producer03 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_producer03task */
+void producer03task(void *argument)
+{
+  /* USER CODE BEGIN producer03task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END producer03task */
 }
 
 /* oneMsFunc function */
