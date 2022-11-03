@@ -237,7 +237,6 @@ int main(void)
   LCD_Init();
   LCD_ClearDisplay(0xFFFF);
 
-  LCD_WriteString(0, 0, 0, 0xFFFF, "Test");
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -644,14 +643,15 @@ void consumer01task(void *argument)
 {
   /* USER CODE BEGIN consumer01task */
   uint16_t currentLine = 0;
-	LCD_WriteString(0, 10, 0, 0xFFFF, "Check Queue every 1.5s");
+	LCD_WriteString(0, 5, 0, 0xFFFF, "Log Messages:");
 	char message[40] = "";
   /* Infinite loop */
   for(;;)
   {
 	  osMessageQueueGet(logQueueHandle, &message, NULL, osWaitForever);
-    if(currentLine*16>=13){LCD_ClearDisplay(0xFFFF); currentLine = 0;}
-	  LCD_WriteString(5,22+currentLine*16, 0, 0xFFFF, message);
+    if(currentLine>=13){LCD_ClearDisplay(0xFFFF); currentLine = 0;LCD_WriteString(0, 5, 0, 0xFFFF, "Log Messages:");}
+	  LCD_WriteString(5,21+currentLine*16, 0, 0xFFFF, message);
+	  currentLine++;
   }
   /* USER CODE END consumer01task */
 }
