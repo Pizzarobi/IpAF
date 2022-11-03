@@ -618,12 +618,12 @@ void StartTask03(void *argument)
 void producer01task(void *argument)
 {
   /* USER CODE BEGIN producer01task */
-  int nr = 0;
+  int nr = 1;
   /* Infinite loop */
   for(;;)
   {
 	  char message[40] = "";
-	  sprintf(message,"Test %d",nr);
+	  sprintf(message,"Uptime %ds",nr);
 	  nr++;
 	  //xQueueSendToFront(logQueueHandle,&message);
 	  //osMessagePut(logQueueHandle,(uint32_t)message,osWaitForever);
@@ -643,13 +643,15 @@ void producer01task(void *argument)
 void consumer01task(void *argument)
 {
   /* USER CODE BEGIN consumer01task */
-	LCD_WriteString(0, 15, 0, 0xFFFF, "Check Queue every 1.5s");
+  uint16_t currentLine = 0;
+	LCD_WriteString(0, 10, 0, 0xFFFF, "Check Queue every 1.5s");
 	char message[40] = "";
   /* Infinite loop */
   for(;;)
   {
 	  osMessageQueueGet(logQueueHandle, &message, NULL, osWaitForever);
-	  LCD_WriteString(5, 50, 0, 0xFFFF, message);
+    if(currentLine*16>=13){LCD_ClearDisplay(0xFFFF); currentLine = 0;}
+	  LCD_WriteString(5,22+currentLine*16, 0, 0xFFFF, message);
   }
   /* USER CODE END consumer01task */
 }
