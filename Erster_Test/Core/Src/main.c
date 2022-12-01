@@ -23,6 +23,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include "display.h"
 
 /* USER CODE END Includes */
 
@@ -70,13 +72,46 @@ const osThreadAttr_t task10ms_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for oneMsHandle */
-osTimerId_t oneMsHandleHandle;
-const osTimerAttr_t oneMsHandle_attributes = {
-  .name = "oneMsHandle"
+/* Definitions for producer01 */
+osThreadId_t producer01Handle;
+const osThreadAttr_t producer01_attributes = {
+  .name = "producer01",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for consumer01 */
+osThreadId_t consumer01Handle;
+const osThreadAttr_t consumer01_attributes = {
+  .name = "consumer01",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for producer02 */
+osThreadId_t producer02Handle;
+const osThreadAttr_t producer02_attributes = {
+  .name = "producer02",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for producer03 */
+osThreadId_t producer03Handle;
+const osThreadAttr_t producer03_attributes = {
+  .name = "producer03",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for logQueue */
+osMessageQueueId_t logQueueHandle;
+const osMessageQueueAttr_t logQueue_attributes = {
+  .name = "logQueue"
+};
+/* Definitions for oneMs */
+osTimerId_t oneMsHandle;
+const osTimerAttr_t oneMs_attributes = {
+  .name = "oneMs"
 };
 /* USER CODE BEGIN PV */
-
+//QueueHandle_t logQueueHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,9 +124,14 @@ static void MX_TIM7_Init(void);
 void StartDefaultTask(void *argument);
 void StartTask02(void *argument);
 void StartTask03(void *argument);
-void prvOneMsHandle(void *argument);
+void producer01task(void *argument);
+void consumer01task(void *argument);
+void producer02task(void *argument);
+void producer03task(void *argument);
+void oneMsFunc(void *argument);
 
 /* USER CODE BEGIN PFP */
+
 
 /* USER CODE END PFP */
 
@@ -134,6 +174,29 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
+	// Peripheral GPIOD einschalten
+	RCC->AHB1ENR |= 1<<3|1;
+	// Peripheral GPIOE einschalten
+	RCC->AHB1ENR |= 1<<4|1;
+
+	// GPIO einrichten für Output
+	GPIOD->MODER |= 0x55154545;
+	GPIOE->MODER |= 0x55554040;
+
+	// Orange LED konfigurieren
+	GPIOD->MODER |= 1<<24;
+
+	// Gruene LED (Port D12) ausschalten
+	GPIOD->ODR &= ~(1<<12);
+
+	//Read auf 1
+	GPIOD->MODER 	|= 1<<8;
+	GPIOD->ODR		|= 1<<4;
+
+	// Hintergrundbeleuchtung
+	GPIOD->MODER |= 1<<26;
+	GPIOD->ODR |= 1<<13;
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -148,15 +211,20 @@ int main(void)
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* Create the timer(s) */
-  /* creation of oneMsHandle */
-  oneMsHandleHandle = osTimerNew(prvOneMsHandle, osTimerPeriodic, NULL, &oneMsHandle_attributes);
+  /* creation of oneMs */
+  oneMsHandle = osTimerNew(oneMsFunc, osTimerPeriodic, NULL, &oneMs_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of logQueue */
+  logQueueHandle = osMessageQueueNew (16, 40, &logQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  //Handle = xQueueCreate(16,sizeof(uint32_t));
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -169,12 +237,28 @@ int main(void)
   /* creation of task10ms */
   task10msHandle = osThreadNew(StartTask03, NULL, &task10ms_attributes);
 
+  /* creation of producer01 */
+  producer01Handle = osThreadNew(producer01task, NULL, &producer01_attributes);
+
+  /* creation of consumer01 */
+  consumer01Handle = osThreadNew(consumer01task, NULL, &consumer01_attributes);
+
+  /* creation of producer02 */
+  producer02Handle = osThreadNew(producer02task, NULL, &producer02_attributes);
+
+  /* creation of producer03 */
+  producer03Handle = osThreadNew(producer03task, NULL, &producer03_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
+  osTimerStart(oneMsHandle,pdMS_TO_TICKS(125));
+  LCD_Init();
+  LCD_ClearDisplay(0xFFFF);
+
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -183,6 +267,9 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  //xTimerCreate("oneMsTimer", pdMS_TO_TICKS(1), pdTRUE, 0, prvOneMsTimer); /////////////////////////
+
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -405,7 +492,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin
+  HAL_GPIO_WritePin(GPIOD, green_led_Pin|LD3_Pin|LD5_Pin|LD6_Pin
                           |Audio_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : CS_I2C_SPI_Pin */
@@ -430,11 +517,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
   HAL_GPIO_Init(PDM_OUT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
+  /*Configure GPIO pin : blue_button_Pin */
+  GPIO_InitStruct.Pin = blue_button_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(blue_button_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BOOT1_Pin */
   GPIO_InitStruct.Pin = BOOT1_Pin;
@@ -450,9 +537,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
   HAL_GPIO_Init(CLK_IN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD4_Pin LD3_Pin LD5_Pin LD6_Pin
+  /*Configure GPIO pins : green_led_Pin LD3_Pin LD5_Pin LD6_Pin
                            Audio_RST_Pin */
-  GPIO_InitStruct.Pin = LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin
+  GPIO_InitStruct.Pin = green_led_Pin|LD3_Pin|LD5_Pin|LD6_Pin
                           |Audio_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -489,9 +576,18 @@ void StartDefaultTask(void *argument)
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
   /* USER CODE BEGIN 5 */
+
   /* Infinite loop */
   for(;;)
   {
+	if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)){
+		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,GPIO_PIN_SET);
+		osDelay(500);
+		HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_12);
+		osDelay(500);
+	}
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,GPIO_PIN_RESET);
+
     osDelay(1);
   }
   /* USER CODE END 5 */
@@ -533,12 +629,123 @@ void StartTask03(void *argument)
   /* USER CODE END StartTask03 */
 }
 
-/* prvOneMsHandle function */
-void prvOneMsHandle(void *argument)
+/* USER CODE BEGIN Header_producer01task */
+/**
+* @brief Sends the current uptime in Seconds to the Log Queue.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_producer01task */
+void producer01task(void *argument)
 {
-  /* USER CODE BEGIN prvOneMsHandle */
+  /* USER CODE BEGIN producer01task */
+  int nr = 1;
+  /* Infinite loop */
+  for(;;)
+  {
+	  char message[40] = "";
+	  sprintf(message,"Uptime %ds",nr);
+	  nr++;
+	  //xQueueSendToFront(logQueueHandle,&message);
+	  //osMessagePut(logQueueHandle,(uint32_t)message,osWaitForever);
+	  osMessageQueuePut(logQueueHandle, &message, 0U, 0U);
+	  osDelay(1000);
+  }
+  /* USER CODE END producer01task */
+}
 
-  /* USER CODE END prvOneMsHandle */
+/* USER CODE BEGIN Header_consumer01task */
+/**
+* @brief Waits for an entry in the Log Queue and prints it to the LCD Display
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_consumer01task */
+void consumer01task(void *argument)
+{
+  /* USER CODE BEGIN consumer01task */
+  uint16_t currentLine = 0;
+	LCD_WriteString(0, 5, 0, 0xFFFF, "Log Messages:");
+	char message[40] = "";
+  /* Infinite loop */
+  for(;;)
+  {
+	  osMessageQueueGet(logQueueHandle, &message, NULL, osWaitForever);
+    if(currentLine>=13){LCD_ClearDisplay(0xFFFF); currentLine = 0;LCD_WriteString(0, 5, 0, 0xFFFF, "Log Messages:");}
+	  LCD_WriteString(5,21+currentLine*16, 0, 0xFFFF, message);
+	  currentLine++;
+  }
+  /* USER CODE END consumer01task */
+}
+
+/* USER CODE BEGIN Header_producer02task */
+/**
+* @brief Checks whether Blue Button is Pressed or Released and sends a Pressed or Release Message to the Queue
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_producer02task */
+void producer02task(void *argument)
+{
+  /* USER CODE BEGIN producer02task */
+  // Log Message wenn Blauer Taster gedrückt wurde
+  uint8_t pressed = 0;
+  char message[40] = "";
+  /* Infinite loop */
+  for(;;)
+  {
+	  if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0) && pressed==0){
+		  pressed = 1;
+		  message[40] = "";
+		  sprintf(message,"Blauer Taster gedrueckt");
+		  osMessageQueuePut(logQueueHandle,&message,0U,0U);
+	  }else if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)==0 && pressed == 1){
+		  pressed = 0;
+		  message[40] = "";
+		  sprintf(message,"Blauer Taster losgelassen");
+		  osMessageQueuePut(logQueueHandle,&message,0U,0U);
+	  }
+	osDelay(100);
+  }
+  /* USER CODE END producer02task */
+}
+
+/* USER CODE BEGIN Header_producer03task */
+/**
+* @brief Function implementing the producer03 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_producer03task */
+void producer03task(void *argument)
+{
+  /* USER CODE BEGIN producer03task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END producer03task */
+}
+
+/* oneMsFunc function */
+void oneMsFunc(void *argument)
+{
+  /* USER CODE BEGIN oneMsFunc */
+//	static uint16_t counter = 0;
+//	counter++;
+//	if(counter < 125){
+//		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_SET);
+//	}else if(counter >= 125){
+//		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_RESET);
+//	}else if(counter >= 250){
+//		counter = 0;
+//	}
+
+	HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_15);
+
+
+  /* USER CODE END oneMsFunc */
 }
 
 /**
